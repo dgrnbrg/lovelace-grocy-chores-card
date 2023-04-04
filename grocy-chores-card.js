@@ -1,4 +1,6 @@
-import {html, LitElement, nothing} from "https://unpkg.com/lit?module";
+const LitElement = customElements.get("ha-panel-lovelace") ? Object.getPrototypeOf(customElements.get("ha-panel-lovelace")) : Object.getPrototypeOf(customElements.get("hc-lovelace"));
+const html = LitElement.prototype.html;
+const nothing = LitElement.prototype.nothing;
 import {DateTime} from "https://unpkg.com/luxon@3.0.3?module";
 import style from './style.js';
 
@@ -342,8 +344,17 @@ class GrocyChoresCard extends LitElement {
     }
 
     _calculateDaysTillNow(date) {
-        const now = DateTime.now();
-        return date.startOf('day').diff(now.startOf('day'), 'days').days;
+        const now = Date.now();
+
+        // The number of milliseconds in one day
+        const ONE_DAY = 1000 * 60 * 60 * 24;
+
+        // Calculate the difference in milliseconds
+        const differenceMs = Math.abs(date - now);
+
+        // Convert back to days and return
+        return Math.round(differenceMs / ONE_DAY);
+        //return date.startOf('day').diff(now.startOf('day'), 'days').days;
     }
 
     _dueHtmlClass(dueInDays) {
@@ -380,7 +391,7 @@ class GrocyChoresCard extends LitElement {
         } else if (lastTrackedDays < this.last_tracked_days_threshold) {
             return this._translate(`${lastTrackedDays} days ago`);
         } else {
-            return this._formatDate(lastTrackedDate, dateOnly);
+            return this._simpleDateFormat(lastTrackedDate/*, dateOnly */);
         }
     }
 
@@ -391,9 +402,16 @@ class GrocyChoresCard extends LitElement {
         return string;
     }
 
+    _simpleDateFormat(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
     _taskDueDateInputFormat() {
-        const now = DateTime.now();
-        return now.toFormat("yyyy-LL-dd");
+        const now = new Date();
+        return this._simpleDateFormat(now);
     }
 
     _formatDate(dateTime, isDateOnly = false) {
@@ -418,7 +436,7 @@ class GrocyChoresCard extends LitElement {
     }
 
     _toDateTime(date) {
-        return DateTime.fromISO(date);
+        return new Date(Date.parse(date));
     }
 
     _isItemVisible(item) {
@@ -606,12 +624,6 @@ class GrocyChoresCard extends LitElement {
 
         taskData["name"] = taskName;
         if (taskDueDate) {
-            let parsedDate = DateTime.fromFormat(taskDueDate, "yyyy-LL-dd");
-            if (!parsedDate.isValid) {
-                alert(this._translate("Due date must be empty or a valid date in format yyyy-mm-dd"));
-                return;
-            }
-
             taskData["due_date"] = taskDueDate;
         }
 

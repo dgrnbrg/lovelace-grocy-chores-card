@@ -1,4 +1,5 @@
-import {css} from "https://unpkg.com/lit?module";
+const LitElement = customElements.get("ha-panel-lovelace") ? Object.getPrototypeOf(customElements.get("ha-panel-lovelace")) : Object.getPrototypeOf(customElements.get("hc-lovelace"));
+const css = LitElement.prototype.css;
 
 const style = css`
 
